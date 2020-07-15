@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useContext } from "react";
 
 const UserContext = React.createContext(null);
+const ThemeContext = React.createContext();
 
 const UserInfo = () => {
     const user = useContext(UserContext);
@@ -9,14 +10,8 @@ const UserInfo = () => {
 
 const Repositories = () => {
     const [repositories, setRepositories] = useState([]);
+    const darkTheme = useContext(ThemeContext);
     useEffect(() => {
-        const fetchData = async () => {
-            const response = await fetch(
-                "https://api.github.com/users/facebook/repos"
-            );
-            const data = await response.json();
-            setRepositories(data);
-        };
         fetchData();
     }, []);
 
@@ -24,6 +19,14 @@ const Repositories = () => {
         const filtered = repositories.filter((repo) => repo.favourite);
         document.title = `You have ${filtered.length} favourites`;
     }, [repositories]);
+
+    const fetchData = async () => {
+        const response = await fetch(
+            "https://api.github.com/users/facebook/repos"
+        );
+        const data = await response.json();
+        setRepositories(data);
+    };
 
     const handleFavourite = (id) => {
         const newRepositories = repositories.map((repo) => {
@@ -34,23 +37,35 @@ const Repositories = () => {
         setRepositories(newRepositories);
     };
 
+    const themeStyles = {
+        backgroundColor: darkTheme ? "#333" : "#CCC",
+        color: darkTheme ? "#CCC" : "#333",
+    };
+
     return (
-        <ul>
-            {repositories.map((repo) => (
-                <li key={repo.id}>
-                    {repo.name} {repo.favourite && <span>(Favourite)</span>}
-                    <button onClick={() => handleFavourite(repo.id)}>
-                        Favourite
-                    </button>
-                </li>
-            ))}
-        </ul>
+        <div style={themeStyles}>
+            <ul>
+                {repositories.map((repo) => (
+                    <li key={repo.id}>
+                        {repo.name} {repo.favourite && <span>(Favourite)</span>}
+                        <button onClick={() => handleFavourite(repo.id)}>
+                            Favourite
+                        </button>
+                    </li>
+                ))}
+            </ul>
+        </div>
     );
 };
 
 function App() {
     // const [repositories, setRepositories] = useState([]);
     const [user, setUser] = useState(null);
+    const [darkTheme, setDarkTheme] = useState(false);
+
+    const toggleTheme = () => {
+        setDarkTheme(!darkTheme);
+    };
 
     /* useEffect(() => {
         const fetchData = async () => {
@@ -78,25 +93,28 @@ function App() {
     }; */
 
     return (
-        <UserContext.Provider value={user}>
-            <div>
-                <button onClick={(event) => setUser({ name: "John" })}>
-                    Login
-                </button>
-                <UserInfo />
-            </div>
-            {user === null ? " " : <Repositories />}
-            {/* <ul>
-                {repositories.map((repo) => (
-                    <li key={repo.id}>
-                        {repo.name} {repo.favourite && <span>(Favourite)</span>}
-                        <button onClick={() => handleFavourite(repo.id)}>
-                            Favourite
-                        </button>
-                    </li>
-                ))}
-            </ul> */}
-        </UserContext.Provider>
+        <ThemeContext.Provider value={darkTheme}>
+            <UserContext.Provider value={user}>
+                <div>
+                    <button onClick={(event) => setUser({ name: "John" })}>
+                        Login
+                    </button>
+                    <UserInfo />
+                    <button onClick={toggleTheme}>Toggle Theme</button>
+                </div>
+                {user === null ? " " : <Repositories />}
+                {/* <ul>
+                    {repositories.map((repo) => (
+                        <li key={repo.id}>
+                            {repo.name} {repo.favourite && <span>(Favourite)</span>}
+                            <button onClick={() => handleFavourite(repo.id)}>
+                                Favourite
+                            </button>
+                        </li>
+                    ))}
+                </ul> */}
+            </UserContext.Provider>
+        </ThemeContext.Provider>
     );
 }
 
